@@ -1,57 +1,55 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
-final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+final FlutterLocalNotificationsPlugin gestionnaireNotifications =
     FlutterLocalNotificationsPlugin();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  const AndroidInitializationSettings initializationSettingsAndroid =
+  const AndroidInitializationSettings parametresAndroid =
       AndroidInitializationSettings('@mipmap/ic_launcher');
 
-  const DarwinInitializationSettings initializationSettingsIOS =
+  const DarwinInitializationSettings parametresIOS =
       DarwinInitializationSettings(
         requestAlertPermission: true,
         requestBadgePermission: true,
         requestSoundPermission: true,
       );
 
-  const InitializationSettings initializationSettings = InitializationSettings(
-    android: initializationSettingsAndroid,
-    iOS: initializationSettingsIOS,
-  );
+  const InitializationSettings parametresInitialisation =
+      InitializationSettings(android: parametresAndroid, iOS: parametresIOS);
 
-  await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+  await gestionnaireNotifications.initialize(parametresInitialisation);
 
-  await flutterLocalNotificationsPlugin
+  await gestionnaireNotifications
       .resolvePlatformSpecificImplementation<
         AndroidFlutterLocalNotificationsPlugin
       >()
       ?.requestNotificationsPermission();
 
-  await flutterLocalNotificationsPlugin
+  await gestionnaireNotifications
       .resolvePlatformSpecificImplementation<
         AndroidFlutterLocalNotificationsPlugin
       >()
       ?.requestExactAlarmsPermission();
 
-  await flutterLocalNotificationsPlugin
+  await gestionnaireNotifications
       .resolvePlatformSpecificImplementation<
         IOSFlutterLocalNotificationsPlugin
       >()
       ?.requestPermissions(alert: true, badge: true, sound: true);
 
-  runApp(const MyApp());
+  runApp(const ApplicationPrincipale());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class ApplicationPrincipale extends StatelessWidget {
+  const ApplicationPrincipale({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      home: const HomeScreen(),
+      home: const EcranAccueil(),
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
@@ -61,33 +59,30 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+class EcranAccueil extends StatefulWidget {
+  const EcranAccueil({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  State<EcranAccueil> createState() => _EcranAccueilState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
-  bool _isLoading = false;
+class _EcranAccueilState extends State<EcranAccueil> {
+  //1. Heads-up Notification
+  Future<void> lancerNotifUrgente() async {
+    const AndroidNotificationDetails configAndroid = AndroidNotificationDetails(
+      'canal_urgent',
+      'Notifications Urgentes',
+      importance: Importance.max,
+      priority: Priority.high,
+      fullScreenIntent: true,
+    );
 
-  // 1. Notifikasyon Imedya
-
-  Future<void> showImmediateNotification() async {
-    const AndroidNotificationDetails androidDetails =
-        AndroidNotificationDetails(
-          'immediate_channel',
-          'Immediate Notifications',
-          importance: Importance.max,
-          priority: Priority.high,
-        );
-
-    await flutterLocalNotificationsPlugin.show(
-      0,
-      "Notifikasyon Imedya",
-      "Sa se yon notifikasyon ki parèt touswit.",
+    await gestionnaireNotifications.show(
+      10,
+      "Alerte Importante",
+      "Cette notification apparait en haut de l'ecran meme si une autre application est ouverte.",
       const NotificationDetails(
-        android: androidDetails,
+        android: configAndroid,
         iOS: DarwinNotificationDetails(
           presentAlert: true,
           presentBadge: true,
@@ -97,31 +92,116 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // 2. Notifikasyon Big Text
+  //2. Immediate Notification
+  Future<void> lancerNotifInstantanee() async {
+    const AndroidNotificationDetails configAndroid = AndroidNotificationDetails(
+      'canal_instantane',
+      'Notifications Instantanees',
+      importance: Importance.max,
+      priority: Priority.high,
+    );
 
-  Future<void> showBigTextNotification() async {
-    const AndroidNotificationDetails
-    androidDetails = AndroidNotificationDetails(
-      'bigtext_channel',
-      'Big Text Notifications',
+    await gestionnaireNotifications.show(
+      20,
+      "Notification Instantanee",
+      "Cette notification s'affiche immediatement apres avoir appuye sur le bouton.",
+      const NotificationDetails(
+        android: configAndroid,
+        iOS: DarwinNotificationDetails(
+          presentAlert: true,
+          presentBadge: true,
+          presentSound: true,
+        ),
+      ),
+    );
+  }
+
+  //3. Action Notification
+  Future<void> lancerNotifAvecActions() async {
+    const AndroidNotificationDetails configAndroid = AndroidNotificationDetails(
+      'canal_actions',
+      'Notifications avec Actions',
+      importance: Importance.max,
+      priority: Priority.high,
+      actions: [
+        AndroidNotificationAction('confirmer', 'Confirmer'),
+        AndroidNotificationAction('annuler', 'Annuler'),
+      ],
+    );
+
+    await gestionnaireNotifications.show(
+      30,
+      "Confirmation Requise",
+      "Voulez-vous confirmer votre rendez-vous de demain a 10h?",
+      const NotificationDetails(
+        android: configAndroid,
+        iOS: DarwinNotificationDetails(
+          presentAlert: true,
+          presentBadge: true,
+          presentSound: true,
+        ),
+      ),
+    );
+  }
+
+  //4. Inbox Style Notification
+  Future<void> lancerNotifBoiteReception() async {
+    const AndroidNotificationDetails configAndroid = AndroidNotificationDetails(
+      'canal_boite',
+      'Notifications Boite de Reception',
+      importance: Importance.max,
+      priority: Priority.high,
+      styleInformation: InboxStyleInformation(
+        [
+          "Marie: Bonjour, tu es disponible?",
+          "Jean: La reunion est a 15h.",
+          "Sophie: N'oublie pas le rapport!",
+          "Paul: Merci pour ton aide hier.",
+        ],
+        contentTitle: "4 nouveaux messages",
+        summaryText: "4 messages non lus",
+      ),
+    );
+
+    await gestionnaireNotifications.show(
+      40,
+      "Boite de Reception",
+      "Vous avez 4 nouveaux messages.",
+      const NotificationDetails(
+        android: configAndroid,
+        iOS: DarwinNotificationDetails(
+          presentAlert: true,
+          presentBadge: true,
+          presentSound: true,
+        ),
+      ),
+    );
+  }
+
+  //5. Big Text Notification
+  Future<void> lancerNotifGrandTexte() async {
+    const AndroidNotificationDetails configAndroid = AndroidNotificationDetails(
+      'canal_grand_texte',
+      'Notifications Grand Texte',
       importance: Importance.max,
       priority: Priority.high,
       styleInformation: BigTextStyleInformation(
-        "Sa se yon notifikasyon ki gen yon tèks long pou montre kijan "
-        "BigTextStyle mache nan Flutter. Lè ou depliye notifikasyon an, "
-        "ou ka wè tout mesaj la san pwoblèm. Sa trè itil pou nouvèl ak alèt.",
+        "Ceci est une notification avec un contenu etendu. "
+        "Lorsque vous depliez cette notification, vous pouvez lire "
+        "l'integralite du message sans avoir a ouvrir l'application. "
+        "Cette fonctionnalite est tres utile pour les actualites ou les rappels detailles.",
         htmlFormatBigText: true,
-        contentTitle: "Big Text Notifikasyon",
-        summaryText: "Tèks long dewoule",
+        contentTitle: "Message Complet",
+        summaryText: "Appuyez pour lire la suite",
       ),
     );
 
-    await flutterLocalNotificationsPlugin.show(
-      3,
-      "Big Text Notifikasyon",
-      "Gade tèks long lan...",
+    await gestionnaireNotifications.show(
+      50,
+      "Nouveau Message",
+      "Depliez pour lire le message complet...",
       const NotificationDetails(
-        android: androidDetails,
+        android: configAndroid,
         iOS: DarwinNotificationDetails(
           presentAlert: true,
           presentBadge: true,
@@ -131,110 +211,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // 3. Notifikasyon ak Bouton Aksyon
-
-  Future<void> showActionNotification() async {
-    const AndroidNotificationDetails androidDetails =
-        AndroidNotificationDetails(
-          'action_channel',
-          'Action Notifications',
-          importance: Importance.max,
-          priority: Priority.high,
-          actions: [
-            AndroidNotificationAction('accept', 'Aksepte'),
-            AndroidNotificationAction('decline', 'Refize'),
-          ],
-        );
-
-    await flutterLocalNotificationsPlugin.show(
-      4,
-      "Notifikasyon ak Aksyon",
-      "Ou gen yon envitasyon! Ki sa ou vle fè?",
-      const NotificationDetails(
-        android: androidDetails,
-        iOS: DarwinNotificationDetails(
-          presentAlert: true,
-          presentBadge: true,
-          presentSound: true,
-        ),
-      ),
-    );
-  }
-
-  // 4. Notifikasyon Progress Bar
-
-  Future<void> showProgressNotification() async {
-    if (_isLoading) return;
-    setState(() => _isLoading = true);
-
-    for (int progress = 0; progress <= 100; progress += 10) {
-      final AndroidNotificationDetails androidDetails =
-          AndroidNotificationDetails(
-            'progress_channel',
-            'Progress Notifications',
-            importance: Importance.max,
-            priority: Priority.high,
-            showProgress: true,
-            maxProgress: 100,
-            progress: progress,
-            onlyAlertOnce: true,
-            ongoing: progress < 100,
-            playSound: true,
-            enableVibration: true,
-          );
-
-      await flutterLocalNotificationsPlugin.show(
-        5,
-        progress < 100 ? "Download ap fèt... $progress%" : "Download Fini! ",
-        progress < 100 ? "Tanpri tann..." : "Fichye a telechaje avèk siksè.",
-        NotificationDetails(
-          android: androidDetails,
-          iOS: DarwinNotificationDetails(
-            presentAlert: progress == 0 || progress == 100,
-            presentBadge: true,
-            presentSound: progress == 0 || progress == 100,
-          ),
-        ),
-      );
-
-      if (progress < 100) {
-        await Future.delayed(const Duration(milliseconds: 500));
-      }
-    }
-
-    setState(() => _isLoading = false);
-  }
-
-  // 5. Notifikasyon Silans
-
-  Future<void> showSilentNotification() async {
-    const AndroidNotificationDetails androidDetails =
-        AndroidNotificationDetails(
-          'silent_channel',
-          'Silent Notifications',
-          importance: Importance.low,
-          priority: Priority.low,
-          playSound: false,
-          enableVibration: false,
-          silent: true,
-        );
-
-    await flutterLocalNotificationsPlugin.show(
-      6,
-      "Notifikasyon Silansye",
-      "Notifikasyon sa a parèt san son ni vibrasyon.",
-      const NotificationDetails(
-        android: androidDetails,
-        iOS: DarwinNotificationDetails(
-          presentAlert: true,
-          presentBadge: true,
-          presentSound: false,
-        ),
-      ),
-    );
-  }
-
-  void _showSnackBar(String message) {
+  void _afficherMessageConfirmation(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
@@ -244,11 +221,11 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget buildNotificationButton({
-    required String title,
+  Widget construireBoutonNotification({
+    required String titre,
     required String description,
     required VoidCallback onPressed,
-    bool isActive = false,
+    bool estActif = false,
   }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 20),
@@ -261,21 +238,21 @@ class _HomeScreenState extends State<HomeScreen> {
               onPressed: onPressed,
               style: OutlinedButton.styleFrom(
                 side: BorderSide(
-                  color: isActive ? Colors.orange : Colors.black,
+                  color: estActif ? Colors.orange : Colors.black,
                   width: 1.5,
                 ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
-                backgroundColor: isActive
+                backgroundColor: estActif
                     ? Colors.orange.shade50
                     : Colors.white,
               ),
               child: Text(
-                title,
+                titre,
                 style: TextStyle(
                   fontSize: 16,
-                  color: isActive ? Colors.orange : Colors.black87,
+                  color: estActif ? Colors.orange : Colors.black87,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -307,50 +284,57 @@ class _HomeScreenState extends State<HomeScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
         child: Column(
           children: [
-            buildNotificationButton(
-              title: "Immediate Notification",
-              description: "Voye yon notifikasyon ki parèt touswit imedyatman.",
-              onPressed: () async {
-                await showImmediateNotification();
-                _showSnackBar("Notifikasyon imedya voye!");
-              },
-            ),
-            buildNotificationButton(
-              title: "Big Text Notification",
+            construireBoutonNotification(
+              titre: "Heads-up Notification",
               description:
-                  "Voye yon notifikasyon ak yon long tèks ou ka depliye.",
+                  "Affiche une notification en haut de l'ecran, meme si une autre app est ouverte.",
               onPressed: () async {
-                await showBigTextNotification();
-                _showSnackBar("Big Text notifikasyon voye!");
+                await lancerNotifUrgente();
+                _afficherMessageConfirmation("Notification heads-up envoyee!");
               },
             ),
-            buildNotificationButton(
-              title: "Action Notification",
+            construireBoutonNotification(
+              titre: "Immediate Notification",
               description:
-                  "Notifikasyon ak bouton aksyon: Aksepte oswa Refize.",
+                  "Envoie une notification qui s'affiche instantanement.",
               onPressed: () async {
-                await showActionNotification();
-                _showSnackBar("Notifikasyon ak bouton voye!");
+                await lancerNotifInstantanee();
+                _afficherMessageConfirmation(
+                  "Notification instantanee envoyee!",
+                );
               },
             ),
-            buildNotificationButton(
-              title: _isLoading
-                  ? "Download ap fèt... "
-                  : "Progress Bar Notification",
+            construireBoutonNotification(
+              titre: "Action Notification",
               description:
-                  "Montre yon ba pwogrè pou simile yon download (5 segonn).",
-              isActive: _isLoading,
+                  "Notification avec boutons d'action: Confirmer ou Annuler.",
               onPressed: () async {
-                await showProgressNotification();
-                _showSnackBar("Download fini!");
+                await lancerNotifAvecActions();
+                _afficherMessageConfirmation(
+                  "Notification avec actions envoyee!",
+                );
               },
             ),
-            buildNotificationButton(
-              title: "Silent Notification",
-              description: "Notifikasyon ki parèt san son ni vibrasyon ditou.",
+            construireBoutonNotification(
+              titre: "Inbox Style Notification",
+              description:
+                  "Affiche plusieurs messages groupes dans une seule notification.",
               onPressed: () async {
-                await showSilentNotification();
-                _showSnackBar("Notifikasyon silansye voye!");
+                await lancerNotifBoiteReception();
+                _afficherMessageConfirmation(
+                  "Notification boite de reception envoyee!",
+                );
+              },
+            ),
+            construireBoutonNotification(
+              titre: "Big Text Notification",
+              description:
+                  "Affiche un long message que vous pouvez lire en depliez la notification.",
+              onPressed: () async {
+                await lancerNotifGrandTexte();
+                _afficherMessageConfirmation(
+                  "Notification grand texte envoyee!",
+                );
               },
             ),
           ],
